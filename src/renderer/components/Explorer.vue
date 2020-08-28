@@ -15,11 +15,11 @@
                     </template>
                 </el-input>
             </div>
-            <div style="margin-top: 60px">
+            <div ref="fileContainer" style="margin-top: 60px;overflow-y: scroll">
                 <el-card class="file" v-for="file in files" :key="file" :body-style="{padding: '2px'}" @click.right.native="itemRightClick(file, 'file')">
                     <div class="preview" @click="openFile(file)">
-                        <i v-if="! $u.isImg(file)" class="el-icon-document" style="font-size: 50px;line-height: 80px;"></i>
-                        <img v-if="$u.isImg(file)" :src="cd + (cd.endsWith('/') ? '' : '/') + file" />
+                        <i class="el-icon-document" style="font-size: 50px;line-height: 80px;"></i>
+                        <!-- <img v-if="$u.isImg(file)" :src="cd + (cd.endsWith('/') ? '' : '/') + file" /> -->
                     </div>
                     <el-divider></el-divider>
                     <div class="file-name">
@@ -49,7 +49,7 @@
             </div>
         </el-dialog>
 
-        <el-drawer :visible.sync="show.dirPreview" direction="rtl" :modal="false" :size="style.width - 300 + 'px'" :show-close="false">
+        <el-drawer ref="previewContainer" :visible.sync="show.dirPreview" direction="rtl" :modal="false" :size="style.width - 300 + 'px'" :show-close="false">
             <div style="width: 100%;height: 100%;overflow: scroll;">
                 <div class="dir-preview" v-for="item in preview.dirChildren" :key="item.name"  @click="openFileReal(item.name)">
                     <p v-if="! item.img">{{ $pa.basename(item.name) }}</p>
@@ -326,8 +326,8 @@
     }
 
     .dir-preview {
-        width: 200px;
-        height: 200px;
+        width: 400px;
+        height: 400px;
         display:inline-block;
         border: 1px solid lightgray;
         border-radius: 5px;
@@ -338,12 +338,12 @@
     }
 
     .dir-preview p {
-        line-height: 200px;
+        line-height: 400px;
     }
 
     .dir-preview .el-image {
-        width: 200px;
-        height: 200px;
+        width: 400px;
+        height: 400px;
     }
 
     ::-webkit-scrollbar {
