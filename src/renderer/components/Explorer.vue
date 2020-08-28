@@ -53,7 +53,7 @@
             <div style="width: 100%;height: 100%;overflow: scroll;">
                 <div class="dir-preview" v-for="item in preview.dirChildren" :key="item.name"  @click="openFileReal(item.name)">
                     <p v-if="! item.img">{{ $pa.basename(item.name) }}</p>
-                    <img v-if="item.img" :src="item.name" />
+                    <el-image lazy v-if="item.img" :src="item.name" fit="contain"></el-image>
                 </div>
             </div>
         </el-drawer>
@@ -261,7 +261,6 @@
                 if (this.select.file) {
                     this.files = this.files.filter(d => d != path.bsaename(this.select.file))
                 }
-                // fs.renameSync(old, folder + (folder.endsWith('/') ? '' : '/') + path.basename(old))
                 mv(old, folder + (folder.endsWith('/') ? '' : '/') + path.basename(old), { mkdirp: true }, err => {
                     if (!err) {
                         this.show.folder = false
@@ -342,10 +341,9 @@
         line-height: 200px;
     }
 
-    .dir-preview img {
+    .dir-preview .el-image {
         width: 200px;
         height: 200px;
-        object-fit: contain;
     }
 
     ::-webkit-scrollbar {

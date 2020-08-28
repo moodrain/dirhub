@@ -23,4 +23,9 @@ html, body, #app {
   width: 100%;
   height: 100%;
 }
+.el-drawer__body {
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
 </style>
