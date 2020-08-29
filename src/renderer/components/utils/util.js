@@ -17,7 +17,8 @@ if (!fs.existsSync(folderJson)) {
 }
 if (!fs.existsSync(configJson)) {
     fs.writeFileSync(configJson, JSON.stringify({
-        defaultFolder: '/'
+        defaultFolder: '/',
+        previewSize: 200,
     }))
 }
 
@@ -78,7 +79,7 @@ export default {
         return true
     },
     getDefaultFolder() {
-        return config.defaultFolder
+        return config.defaultFolder ? config.defaultFolder : '/'
     },
     setDefaultFolder(folder) {
         return this.setConfig('defaultFolder', folder)
@@ -141,6 +142,12 @@ export default {
     },
     isImg(file) {
         return ['jpg', 'png', 'jpeg', 'bmp', 'gif', 'webp'].includes(path.extname(file).toLowerCase().slice(1))
+    },
+    getPreviewSize() {
+        return config.previewSize ? config.previewSize : 200
+    },
+    setPreviewSize(size) {
+        return this.setConfig('previewSize', size)
     },
     errMsg() {
         let msg = errMsg

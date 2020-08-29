@@ -46,6 +46,7 @@
                     <el-button icon="el-icon-plus" @click="addFolder" size="small"></el-button>
                     <el-button icon="el-icon-house" @click="setDefaultFolder" size="small"></el-button>
                     <el-button :icon="edit.folder ? 'el-icon-close' : 'el-icon-edit'" @click="edit.folder = !edit.folder" size="small"></el-button>
+                    <el-button icon="el-icon-view" size="small" @click="setPreviewSize"></el-button>
                 </div>
             </div>
         </el-dialog>
@@ -110,6 +111,7 @@
                 preview: {
                     dir: '',
                     dirChildren: [],
+                    size: 200,
                 },
                 edit: {
                     folder: false,
@@ -123,6 +125,8 @@
             this.cd = util.getDefaultFolder()
             this.chdir(this.cd)
             this.folders = util.getFolders()
+            this.preview.size = util.getPreviewSize()
+            this.style.dirPreview.height = this.style.dirPreview.width = this.style.dirPreviewP['line-height'] = (this.preview.size + 'px')
             let setSize = () => {
                 let size = remote.getCurrentWindow().getSize()
                 this.style.width = size[0]
@@ -259,9 +263,20 @@
                         alert(err)
                     }
                 })
-                
-            }
-        },
+            },
+            setPreviewSize() {
+                let size = this.preview.size
+                this.$prompt('preview size to set (default ' + size + ' )' ).then(({value}) =>  {
+                    value = !isNaN(value) ? value : size
+                    this.preview.size = value
+                    this.style.dirPreview.height = this.style.dirPreview.width = this.style.dirPreviewP['line-height'] = (this.preview.size + 'px')
+                    if (! util.setPreviewSize(value)) {
+                        alert(util.errMsg())
+                        this.setPreviewSize()   
+                    }
+                }).catch(() => {})
+            },
+        }
     }
 </script>
 
