@@ -83,7 +83,7 @@ export default {
     setDefaultFolder(folder) {
         return this.setConfig('defaultFolder', folder)
     },
-    prevewDir(dir) {
+    scanDir(dir) {
         if (!fs.existsSync(dir)) {
             errMsg = 'dir not found'
             return false
@@ -101,6 +101,7 @@ export default {
             let stat = fs.statSync(dir + f)
             if (stat.isFile()) {
                 list.push({
+                    base: f,
                     name: dir + f,
                     dir: false,
                     img: this.isImg(f),
@@ -108,26 +109,33 @@ export default {
             }
             if (stat.isDirectory()) {
                 list.push({
+                    base: f,
                     name: dir + f,
                     dir: true,
                 })
             }
         })
         list = list.sort((a, b) => {
-            if (a.dir && !b.dir) {
-                return 1
-            }
-            if (!a.dir && b.dir) {
-                return -1
-            }
-            if (a.img && !b.img) {
-                return 1
-            }
-            if (!a.img && b.img) {
-                return -1
-            }
-            return 0
+            let aNo = a.base.split('.')[0]
+            let bNo = b.base.split('.')[0]
+            let aInt = isNaN(parseInt(aNo)) ? 0 : parseInt(aNo)
+            let bInt = isNaN(parseInt(bNo)) ? 0 : parseInt(bNo)
+            if (!isNaN(aNo) && !isNaN(bNo)) {
+                return aNo - bNo
+            } else {
+                if (aInt - bInt !== 0) {
+                    return bInt - aInt
+                }
+                if (isNaN(aNo) && !isNaN(bNo)) {
+                    return 1
+                }
+                if (!isNaN(aNo) && isNaN(bNo)) {
+                    return -1
+                } else {
 
+                    return a.base.toLowerCase() > b.base.toLowerCase() ? 1 : -1
+                }
+            }
         })
         return list
     },

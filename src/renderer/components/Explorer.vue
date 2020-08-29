@@ -2,8 +2,8 @@
     <el-container style="width: 100%;height: 100%">
         <el-aside width="200px" style="height: 100%">
             <el-menu style="height: 100%;z-index: 2020;">
-                <el-menu-item :index="dir" v-for="dir in dirs" :key="dir" @click.right.native="itemRightClick(dir, 'dir')" @click.native="dirSelect(dir)">
-                    <span slot="title">{{ dir }}</span>
+                <el-menu-item :index="dir.base" v-for="dir in dirs" :key="dir.name" @click.right.native="itemRightClick(dir.name, 'dir')" @click.native="dirSelect(dir.name)">
+                    <span slot="title" style="user-select: none">{{ dir.base }}</span>
                 </el-menu-item>
             </el-menu>
         </el-aside>
@@ -15,17 +15,18 @@
                     </template>
                 </el-input>
             </div>
-            <div ref="fileContainer" style="margin-top: 60px;overflow-y: scroll">
-                <el-card class="file" v-for="file in files" :key="file" :body-style="{padding: '2px'}" @click.right.native="itemRightClick(file, 'file')">
-                    <div class="preview" @click="openFile(file)">
-                        <i class="el-icon-document" style="font-size: 50px;line-height: 80px;"></i>
-                        <!-- <img v-if="$u.isImg(file)" :src="cd + (cd.endsWith('/') ? '' : '/') + file" /> -->
-                    </div>
-                    <el-divider></el-divider>
-                    <div class="file-name">
-                        <p>{{ file }}</p>
-                    </div>
-                </el-card>
+            <div ref="fileContainer" style="height: 100%;overflow-y: scroll">
+                <div style="margin-top: 60px;">
+                    <el-card class="file" v-for="file in files" :key="file.name" :body-style="{padding: '2px'}" @click.right.native="itemRightClick(file.name, 'file')">
+                        <div class="preview" @click="openFile(file.name)">
+                            <i class="el-icon-document" style="font-size: 50px;line-height: 80px;"></i>
+                        </div>
+                        <el-divider></el-divider>
+                        <div class="file-name">
+                            <p>{{ file.base }}</p>
+                        </div>
+                    </el-card>
+                </div>
             </div>
         </el-main>
 
@@ -49,11 +50,11 @@
             </div>
         </el-dialog>
 
-        <el-drawer ref="previewContainer" :visible.sync="show.dirPreview" direction="rtl" :modal="false" :size="style.width - 300 + 'px'" :show-close="false">
-            <div style="width: 100%;height: 100%;overflow: scroll;">
-                <div class="dir-preview" v-for="item in preview.dirChildren" :key="item.name"  @click="openFileReal(item.name)">
-                    <p v-if="! item.img">{{ $pa.basename(item.name) }}</p>
-                    <el-image lazy v-if="item.img" :src="item.name" fit="contain"></el-image>
+        <el-drawer :visible.sync="show.dirPreview" direction="rtl" :modal="false" :size="style.width - 300 + 'px'" :show-close="false">
+            <div ref="previewContainer" style="width: 100%;height: 100%;overflow-y: scroll;">
+                <div class="dir-preview" :style="style.dirPreview" v-for="item in preview.dirChildren" :key="item.name"  @click="openFile(item.name)">
+                    <p v-if="! item.img" :style="style.dirPreviewP">{{ $pa.basename(item.name) }}</p>
+                    <el-image lazy v-if="item.img" :src="item.name" fit="contain" :style="style.dirPreview"></el-image>
                 </div>
             </div>
         </el-drawer>
@@ -85,6 +86,13 @@
                 style: {
                     width: 0,
                     height: 0,
+                    dirPreview: {
+                        width: '200px',
+                        height: '200px',
+                    },
+                    dirPreviewP: {
+                        'line-height': '200px',
+                    }
                 },
                 select: {
                     dir: '',
@@ -113,7 +121,7 @@
         },
         mounted() {
             this.cd = util.getDefaultFolder()
-            this.chdir(this.cd, true)
+            this.chdir(this.cd)
             this.folders = util.getFolders()
             let setSize = () => {
                 let size = remote.getCurrentWindow().getSize()
@@ -125,10 +133,7 @@
             
         },
         methods: {
-            chdir(dir, real = false) {
-                if (! real) {
-                    dir = this.cd + (this.cd.endsWith('/') ? '' : '/') + (dir == '/' ? '' : dir)
-                }
+            chdir(dir) {
                 dir = dir.endsWith(':') ? (dir + '/') : dir
                 if (!fs.existsSync(dir)) {
                     alert('dir not found')
@@ -139,22 +144,10 @@
                     return
                 }
                 this.to.path = this.cd = dir
-                let items = fs.readdirSync(this.cd)
-                let files = []
-                let dirs = []
-                items.forEach(f => {
-                    try {
-                        let stat = fs.statSync(this.cd + (this.cd.endsWith('/') ? '' : '/') + f)
-                        if (stat.isFile()) {
-                            files.push(f)
-                        }
-                        if (stat.isDirectory()) {
-                            dirs.push(f)
-                        }
-                    } catch (e) {}
-                })
-                this.files = files
-                this.dirs = dirs
+                let items = util.scanDir(this.cd)
+                this.files = items.filter(i => ! i.dir)
+                this.dirs = items.filter(i => i.dir)
+                this.$refs.fileContainer.scrollTop = 0
             },
             back() {
                 let pieces = this.cd.split('/')
@@ -162,10 +155,10 @@
                     return
                 }
                 let path = pieces.slice(0, pieces.length - 1).join('/')
-                this.chdir(path, true)
+                this.chdir(path)
             },
             toDir() {
-                this.chdir(this.to.path, true)
+                this.chdir(this.to.path)
             },
             dirSelect(dir) {
                 let needPreview = true
@@ -209,7 +202,6 @@
                 }).catch(() => {})
             },
             itemRightClick(item, type) {
-                item = this.cd + (this.cd.endsWith('/') ? '' : '/') + item
                 this.show.folder = true
                 this.select.dir = this.select.file = ''
                 type == 'dir' ? this.select.dir = item : this.select.file = item
@@ -227,16 +219,14 @@
                 }
             },
             dirPreview(dir) {
-                dir = this.cd + (this.cd.endsWith('/') ? '' : '/') + dir
                 this.preview.dir = dir
                 this.show.dirPreview = true
-                this.preview.dirChildren = util.prevewDir(dir)
+                this.preview.dirChildren = util.scanDir(dir)
+                this.$nextTick(() => {
+                    this.$refs.previewContainer.scrollTop = 0
+                })
             },
             openFile(file) {
-                file = this.cd + (this.cd.endsWith('/') ? '' : '/') + file
-                shell.openItem(file)
-            },
-            openFileReal(file) {
                 shell.openItem(file)
             },
             setDefaultFolder() {
@@ -326,8 +316,6 @@
     }
 
     .dir-preview {
-        width: 400px;
-        height: 400px;
         display:inline-block;
         border: 1px solid lightgray;
         border-radius: 5px;
@@ -335,15 +323,6 @@
         text-align: center;
         user-select: none;
         cursor: pointer;
-    }
-
-    .dir-preview p {
-        line-height: 400px;
-    }
-
-    .dir-preview .el-image {
-        width: 400px;
-        height: 400px;
     }
 
     ::-webkit-scrollbar {
