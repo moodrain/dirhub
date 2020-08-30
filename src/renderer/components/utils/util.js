@@ -99,7 +99,12 @@ export default {
             dir = dir + '/'
         }
         origin.forEach((f) => {
-            let stat = fs.statSync(dir + f)
+            let stat
+            try {
+                stat = fs.statSync(dir + f)
+            } catch (e) {
+                return
+            }
             if (stat.isFile()) {
                 list.push({
                     base: f,

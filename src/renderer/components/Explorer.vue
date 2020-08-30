@@ -206,6 +206,8 @@
                 }).catch(() => {})
             },
             itemRightClick(item, type) {
+                this.show.dirPreview = false
+                this.preview.dirChildren = []
                 this.show.folder = true
                 this.select.dir = this.select.file = ''
                 type == 'dir' ? this.select.dir = item : this.select.file = item
@@ -249,19 +251,21 @@
                     return
                 }
                 let old = this.select.dir ? this.select.dir : this.select.file
-                if (this.select.dir) {
-                    this.dirs = this.dirs.filter(d => d != path.basename(this.select.dir))
-                }
-                if (this.select.file) {
-                    this.files = this.files.filter(d => d != path.bsaename(this.select.file))
-                }
+                let loading = this.$loading({ lock: true })
                 mv(old, folder + (folder.endsWith('/') ? '' : '/') + path.basename(old), { mkdirp: true }, err => {
                     if (!err) {
+                        if (this.select.dir) {
+                            this.dirs = this.dirs.filter(d => d.base != path.basename(this.select.dir))
+                        }
+                        if (this.select.file) {
+                            this.files = this.files.filter(d => d.base != path.bsaename(this.select.file))
+                        }
                         this.show.folder = false
                         this.select.dir = this.select.file = ''
                     } else {
                         alert(err)
                     }
+                    loading.close()
                 })
             },
             setPreviewSize() {
