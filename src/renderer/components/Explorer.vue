@@ -1,7 +1,7 @@
 <template>
     <el-container style="width: 100%;height: 100%">
         <el-aside width="200px" style="height: 100%">
-            <el-menu style="height: 100%;z-index: 2020;">
+            <el-menu style="height: 100%" :style="style.leftBar">
                 <el-menu-item :index="dir.base" v-for="dir in dirs" :key="dir.name" @click.right.native="itemRightClick(dir.name, 'dir')" @click.native="dirSelect(dir.name)">
                     <span slot="title" style="user-select: none">{{ dir.base }}</span>
                 </el-menu-item>
@@ -93,6 +93,9 @@
                     },
                     dirPreviewP: {
                         'line-height': '200px',
+                    },
+                    leftBar: {
+                        'z-index': 2050,
                     }
                 },
                 select: {
@@ -252,6 +255,7 @@
                 }
                 let old = this.select.dir ? this.select.dir : this.select.file
                 let loading = this.$loading({ lock: true })
+                this.style.leftBar['z-index'] = 0
                 mv(old, folder + (folder.endsWith('/') ? '' : '/') + path.basename(old), { mkdirp: true }, err => {
                     if (!err) {
                         if (this.select.dir) {
@@ -266,6 +270,7 @@
                         alert(err)
                     }
                     loading.close()
+                    this.style.leftBar['z-index'] = 2050
                 })
             },
             setPreviewSize() {
